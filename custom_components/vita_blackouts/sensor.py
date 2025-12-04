@@ -14,8 +14,16 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import STATE_OFF, STATE_ON
 from .coordinator import LvivPowerOffCoordinator
+from .coordinator import VitaBlackoutsCoordinator
 
 LOGGER = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True, kw_only=True)
+class VitaBlackoutsSensorDescription(SensorEntityDescription):
+    """Vita blackout entity description."""
+
+    val_func: Callable[[VitaBlackoutsCoordinator], Any]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -25,8 +33,8 @@ class LvivPowerOffSensorDescription(SensorEntityDescription):
     val_func: Callable[[LvivPowerOffCoordinator], Any]
 
 
-SENSOR_TYPES: tuple[LvivPowerOffSensorDescription, ...] = (
-    LvivPowerOffSensorDescription(
+SENSOR_TYPES: tuple[VitaBlackoutsSensorDescription, ...] = (
+    VitaBlackoutsSensorDescription(
         key="electricity",
         icon="mdi:transmission-tower",
         device_class=SensorDeviceClass.ENUM,
@@ -34,14 +42,14 @@ SENSOR_TYPES: tuple[LvivPowerOffSensorDescription, ...] = (
         options=[STATE_ON, STATE_OFF],
         val_func=lambda coordinator: coordinator.current_state,
     ),
-    LvivPowerOffSensorDescription(
+    VitaBlackoutsSensorDescription(
         key="next_poweroff",
         icon="mdi:calendar-remove",
         device_class=SensorDeviceClass.TIMESTAMP,
         name="Next power off",
         val_func=lambda coordinator: coordinator.next_poweroff,
     ),
-    LvivPowerOffSensorDescription(
+    VitaBlackoutsSensorDescription(
         key="next_poweron",
         icon="mdi:calendar-check",
         device_class=SensorDeviceClass.TIMESTAMP,
@@ -58,8 +66,27 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Lviv PowerOff sensors."""
     LOGGER.debug("Setup new entry: %s", config_entry)
-    coordinator: LvivPowerOffCoordinator = config_entry.runtime_data
-    async_add_entities(LvivPowerOffSensor(coordinator, description) for description in SENSOR_TYPES)
+    coordinator: VitaBlackoutsCoordinator = config_entry.runtime_data
+    async_add_entities(VitaBlackoutsSensor(coordinator, description) for description in SENSOR_TYPES)
+
+
+class VitaBlackoutsSensor(SensorEntity):
+    def __init__(
+        self,
+        coordinator: VitaBlackoutsCoordinator,
+        entity_description: VitaBlackoutsSensorDescription,
+    ) -> None:
+        """Initialize the sensor."""
+        self.coordinator = coordinator
+        self.entity_description = entity_description
+        self._attr_unique_id = (
+            f"{coordinator.config_entry.entry_id}-" f"{coordinator.group}-" f"{self.entity_description.key}"
+        )
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the state of the sensor."""
+        return self.entity_description.val_func(self.coordinator)  # type: ignore
 
 
 class LvivPowerOffSensor(SensorEntity):

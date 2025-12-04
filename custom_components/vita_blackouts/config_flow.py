@@ -1,4 +1,4 @@
-"""Config flow for Lviv Power Offline integration."""
+"""Config flow for integration."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from homeassistant.exceptions import HomeAssistantError
 
 from .const import DOMAIN, POWEROFF_GROUP_CONF, PowerOffGroup
 from .energyua_scrapper import EnergyUaScrapper
+from .scraper import DataScraper
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,20 +29,21 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
-    scrapper = EnergyUaScrapper(data[POWEROFF_GROUP_CONF])
+    # scrapper = EnergyUaScrapper(data[POWEROFF_GROUP_CONF])
+    scrapper = DataScraper(data[POWEROFF_GROUP_CONF])
 
     if not await scrapper.validate():
         raise CannotConnect
 
     # Return info that you want to store in the config entry.
     return {
-        "title": "Lviv Power Offline",
+        "title": "Vita Blackouts",
         POWEROFF_GROUP_CONF: data[POWEROFF_GROUP_CONF],
     }
 
 
-class LvivPowerOffConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Lviv Power Offline."""
+class VitaBlackoutConfigFlow(ConfigFlow, domain=DOMAIN):
+    """Handle a config flow for integration."""
 
     VERSION = 1
 

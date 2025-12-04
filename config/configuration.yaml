@@ -7,4 +7,4 @@ debugpy:
 logger:
   default: info
   logs:
-    custom_components.lviv_poweroff: debug
+    custom_components.vita_blackouts: debug

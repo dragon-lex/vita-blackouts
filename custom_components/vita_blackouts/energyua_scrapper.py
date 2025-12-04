@@ -1,4 +1,4 @@
-"""Provides classes for scraping power off periods from the Energy UA website."""
+"""Provides classes for scraping blackout periods from the electric energy operator website."""
 
 import re
 
@@ -9,7 +9,8 @@ from .const import PowerOffGroup
 from .entities import PowerOffPeriod
 
 URL = "https://lviv.energy-ua.info/grupa/{}"
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:145.0) Gecko/20100101 Firefox/145.0"
+
 
 class EnergyUaScrapper:
     """Class for scraping power off periods from the Energy UA website."""
