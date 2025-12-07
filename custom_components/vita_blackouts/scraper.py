@@ -3,6 +3,7 @@
 import re, logging
 import aiohttp
 
+from playwright.async_api import async_playwright
 from bs4 import BeautifulSoup
 from parsel import Selector
 from calmjs.parse import es5
@@ -11,6 +12,7 @@ from calmjs.parse.unparsers.extractor import ast_to_dict
 from .const import PowerOffGroup
 from .entities import BlackoutPeriod
 
+START_URL = "https://www.dtek-krem.com.ua/ua/"
 URL = "https://www.dtek-krem.com.ua/ua/shutdowns"
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:145.0) Gecko/20100101 Firefox/145.0"
 
@@ -21,14 +23,16 @@ class DataScraper:
 
     def __init__(self, group: PowerOffGroup) -> None:
         """Initialize the DataScrapper object."""
+        self.playwright = async_playwright()
         self.group = group
 
     async def validate(self) -> bool:
-        async with (
-            aiohttp.ClientSession(headers={"User-Agent": USER_AGENT}) as session,
-            session.get(URL.format(self.group)) as response,
-        ):
-            return response.status == 200
+        # TODO: add error handling
+        browser = await self.playwright.chrome.launch()
+        page = await browser.new_page()
+        response = await page.goto(START_URL, wait_until="networkidle")
+        await browser.close()
+        return response.status == 200
 
     @staticmethod
     def merge_periods(periods: list[BlackoutPeriod]) -> list[BlackoutPeriod]:
@@ -48,33 +52,34 @@ class DataScraper:
         return merged_periods
 
     async def get_blackout_periods(self) -> list[BlackoutPeriod]:
+        # TODO: add error handling
+        browser = await self.playwright.chrome.launch()
+        page = await browser.new_page()
+        response = await page.goto(START_URL, wait_until="networkidle")
+        await browser.close()
 
-        async with (
-            aiohttp.ClientSession(headers={"User-Agent": USER_AGENT}) as session,
-            session.get(URL.format(self.group)) as response,
-        ):
-            content = await response.text()
-            LOGGER.debug("Script: %s", content)
-            html = Selector(content)
-            # soup = BeautifulSoup(content, "html.parser")
-            # results = []
+        content = response.text()
+        LOGGER.debug("Script: %s", content)
+        html = Selector(content)
+        # soup = BeautifulSoup(content, "html.parser")
+        # results = []
 
-            # s = soup.find("script:contains('DisconSchedule.fact')")
-            s = html.xpath(".//script[contains(., 'DisconSchedule.fact')]")
-            LOGGER.debug("Script: %s", s)
+        # s = soup.find("script:contains('DisconSchedule.fact')")
+        s = html.xpath(".//script[contains(., 'DisconSchedule.fact')]")
+        LOGGER.debug("Script: %s", s)
 
-            js_text = s.xpath(".//text()").get()
-            LOGGER.debug("js_text: %s", js_text)
-            schedules = ast_to_dict(es5(js_text))
-            LOGGER.debug("schedules: %s", schedules)
-            fact = schedules['DisconSchedule.fact']
-            LOGGER.debug("fact: %s", fact)
+        js_text = s.xpath(".//text()").get()
+        LOGGER.debug("js_text: %s", js_text)
+        schedules = ast_to_dict(es5(js_text))
+        LOGGER.debug("schedules: %s", schedules)
+        fact = schedules['DisconSchedule.fact']
+        LOGGER.debug("fact: %s", fact)
 
-            today_key = str(fact['today'])
-            LOGGER.debug("today_key: %s", today_key)
-            today = fact['data'][today_key] # for all groups
-            current = today['GPV6.1'] # my group
-            LOGGER.debug("current: %s", current)
+        today_key = str(fact['today'])
+        LOGGER.debug("today_key: %s", today_key)
+        today = fact['data'][today_key] # for all groups
+        current = today['GPV6.1'] # my group
+        LOGGER.debug("current: %s", current)
 
 
             
@@ -95,7 +100,7 @@ class DataScraper:
             #             tomorrow_results.append(BlackoutPeriod(start, end, today=False))
             #     results += self.merge_periods(tomorrow_results)
 
-            return current
+        return current
 
     def _parse_item(self, item: BeautifulSoup) -> tuple[int, int]:
         start_hour = item.find("i", class_="hour_info_from")

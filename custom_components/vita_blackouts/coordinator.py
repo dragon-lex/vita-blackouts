@@ -134,7 +134,7 @@ class VitaBlackoutsCoordinator(DataUpdateCoordinator):
         self.hass = hass
         self.config_entry = config_entry
         self.group: PowerOffGroup = config_entry.data[POWEROFF_GROUP_CONF]
-        self.api = DataScraper(self.group)
+        self.api = DataScraper(self.playwright, self.group)
         self.periods: list[BlackoutPeriod] = []
 
     async def _async_update_data(self) -> dict:

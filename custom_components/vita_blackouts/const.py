@@ -6,7 +6,7 @@ DOMAIN = "vita_blackouts"
 
 POWEROFF_GROUP_CONF = "poweroff_group"
 
-UPDATE_INTERVAL = 600 # seconds
+UPDATE_INTERVAL = 60*60*4 # every 4 hours
 
 STATE_ON = "Power ON"
 STATE_OFF = "Power OFF"
