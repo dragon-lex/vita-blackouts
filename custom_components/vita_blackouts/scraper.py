@@ -28,7 +28,7 @@ class DataScraper:
 
     async def validate(self) -> bool:
         # TODO: add error handling
-        browser = await self.playwright.chrome.launch()
+        browser = await self.playwright.chromium.launch()
         page = await browser.new_page()
         response = await page.goto(START_URL, wait_until="networkidle")
         await browser.close()
@@ -53,7 +53,7 @@ class DataScraper:
 
     async def get_blackout_periods(self) -> list[BlackoutPeriod]:
         # TODO: add error handling
-        browser = await self.playwright.chrome.launch()
+        browser = await self.playwright.chromium.launch()
         page = await browser.new_page()
         response = await page.goto(START_URL, wait_until="networkidle")
         await browser.close()
