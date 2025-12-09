@@ -5,9 +5,10 @@ from __future__ import annotations
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from install_playwright import install
+# from install_playwright import install
 from playwright.async_api import async_playwright
 
+from installer import install
 from .coordinator import VitaBlackoutsCoordinator, LvivPowerOffCoordinator
 
 # TODO: Add option to notify about upcoming blackouts
